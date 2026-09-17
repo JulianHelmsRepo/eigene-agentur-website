@@ -1,0 +1,239 @@
+---
+---
+
+<section class="hero" aria-label="Einstieg">
+  <div class="hero-media">
+    <img
+      class="hero-media__fallback"
+      src="/video/hero-final.jpg"
+      alt=""
+      role="presentation"
+      width="1926"
+      height="1076"
+    />
+    <video
+      class="hero-media__video"
+      poster="/video/hero-poster.jpg"
+      autoplay
+      muted
+      playsinline
+      aria-hidden="true"
+    >
+      <source src="/video/hero.webm" type="video/webm" />
+      <source src="/video/hero.mp4" type="video/mp4" />
+    </video>
+  </div>
+
+  <div class="hero-content" data-hero-content>
+    <p class="hero-kicker">Digitalagentur für Websites &amp; Sichtbarkeit</p>
+    <h1 class="hero-headline">
+      Gefunden werden. Verstanden werden. <span class="is-accent">Beauftragt</span> werden.
+    </h1>
+    <p class="hero-subline">
+      Conversion-starke Websites und Sichtbarkeit in Google &amp; KI-Suchen – für
+      Dienstleister und Online-Shops.
+    </p>
+    <a class="hero-cta" href="#kontakt">Kostenloses Erstgespräch</a>
+  </div>
+
+  <noscript>
+    <style>
+      .hero-content {
+        opacity: 1 !important;
+      }
+      .hero-media__video {
+        display: none;
+      }
+    </style>
+  </noscript>
+</section>
+
+<script>
+  const OPEN_THRESHOLD = 3.2; // Sekunde, ab der der Bildschirm im aktuellen Video aufrecht/nicht mehr gekippt steht
+
+  const hero = document.querySelector<HTMLElement>(".hero");
+  const content = document.querySelector<HTMLElement>("[data-hero-content]");
+  const video = document.querySelector<HTMLVideoElement>(".hero-media__video");
+
+  if (hero && content && video) {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const revealContent = () => {
+      content.classList.add("is-visible");
+    };
+
+    if (reduceMotion) {
+      hero.classList.add("is-static");
+      revealContent();
+    } else {
+      let revealed = false;
+
+      const onTimeUpdate = () => {
+        if (!revealed && video.currentTime >= OPEN_THRESHOLD) {
+          revealed = true;
+          revealContent();
+          video.removeEventListener("timeupdate", onTimeUpdate);
+        }
+      };
+
+      video.addEventListener("timeupdate", onTimeUpdate);
+      // Absicherung: falls das Video kürzer ist als OPEN_THRESHOLD oder timeupdate
+      // die Schwelle knapp verpasst, spätestens bei Videoende einblenden — das
+      // Video selbst bleibt dabei unangetastet, es läuft normal bis zum letzten Frame.
+      video.addEventListener("ended", () => {
+        revealed = true;
+        revealContent();
+      });
+
+      // Echter Video-Fehler: Video kann nicht abgespielt werden, dann auf das
+      // statische Endframe ausweichen.
+      video.addEventListener("error", () => {
+        revealed = true;
+        hero.classList.add("is-static");
+        revealContent();
+      });
+
+      // Manche Browser blocken Autoplay trotz muted; sicherstellen, dass es startet.
+      video.play().catch(() => {
+        revealed = true;
+        hero.classList.add("is-static");
+        revealContent();
+      });
+
+      // Notfall-Fallback: Text darf nie dauerhaft unsichtbar bleiben, falls das
+      // Video komplett hängen bleibt (kein timeupdate, kein ended, kein error).
+      // Deutlich länger als Videodauer + OPEN_THRESHOLD gesetzt, damit er niemals
+      // ein normal laufendes Video unterbricht — er greift nur bei echtem Hänger,
+      // und blendet dann NUR den Text ein, das Video bleibt unverändert sichtbar.
+      window.setTimeout(() => {
+        if (!revealed) {
+          revealed = true;
+          revealContent();
+        }
+      }, 10000);
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    background: var(--color-background);
+    isolation: isolate;
+  }
+
+  .hero-media {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: var(--color-background);
+  }
+
+  .hero-media__fallback,
+  .hero-media__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-media__fallback {
+    z-index: 1;
+  }
+
+  .hero-media__video {
+    z-index: 2;
+  }
+
+  .hero.is-static .hero-media__video {
+    display: none;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 3;
+    max-width: 62rem;
+    padding-inline: clamp(1.25rem, 6vw, 3rem);
+    text-align: center;
+    opacity: 0;
+    transition: opacity 1.1s ease;
+  }
+
+  .hero-content.is-visible {
+    opacity: 1;
+  }
+
+  .hero-kicker,
+  .hero-headline,
+  .hero-subline {
+    /* heller Glow als Kontrast-Absicherung, unabhängig von der Bezel-Farbe darunter */
+    text-shadow:
+      0 0 20px var(--color-background),
+      0 0 46px var(--color-background),
+      0 0 80px var(--color-background);
+  }
+
+  .hero-kicker {
+    margin: 0 0 1rem;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 1rem;
+    letter-spacing: 0;
+    color: var(--color-text-muted);
+  }
+
+  .hero-headline {
+    margin: 0 0 1.25rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.25rem, 5.4vw, 4.5rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: var(--color-text);
+  }
+
+  .hero-headline .is-accent {
+    color: var(--color-accent);
+  }
+
+  .hero-subline {
+    margin: 0 auto 2rem;
+    max-width: 38ch;
+    font-size: clamp(1rem, 1.6vw, 1.1875rem);
+    color: var(--color-text-muted);
+  }
+
+  .hero-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.875rem 1.75rem;
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    box-shadow: 0 12px 30px -14px rgba(245, 139, 46, 0.65);
+    transition:
+      background-color 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  .hero-cta:hover {
+    background: var(--color-accent-hover);
+    transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-content {
+      transition: none;
+    }
+  }
+</style>
